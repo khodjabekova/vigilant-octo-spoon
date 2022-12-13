@@ -1,5 +1,7 @@
+import os
 from rest_framework import serializers
 from shop.models import Product
+from django.conf import settings
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -9,16 +11,22 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
 
-
     def get_image(self, obj):
 
         if obj.image:
-            path, format = obj.image.url.split(".")
+            ext_list = []
+            name = obj.image.name.split(".")[0]
+            webp = os.path.join(settings.MEDIA_ROOT, f"{name}.webp")
+
+            if os.path.exists(webp):
+                ext_list.append("webp")
+
+            path, ext = obj.image.url.split(".")
+            ext_list.append(ext)
             try:
                 data = {
                     'path': path,
-                    'formats': [format]
-
+                    'formats': ext_list
                 }
                 return data
             except Exception:

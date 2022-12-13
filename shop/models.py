@@ -1,17 +1,11 @@
 import os
-
-from django.db import models
-
-# Create your models here.
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext_lazy as _
-from imagekit.models import ProcessedImageField
 from django.conf import settings
-from config.util import compressImageToWebp
 from PIL import Image
 
-# Create your models here.
+
 class Product(models.Model):
     class Meta:
         verbose_name = _('product')
@@ -37,17 +31,17 @@ class Product(models.Model):
     sku = models.CharField(_('sku'), max_length=255, unique=True)
     price = models.IntegerField(_('price'))
     status = models.PositiveSmallIntegerField(_('status'),
-        choices=STATUS_CHOICE, null=True, blank=True)
-    image = models.ImageField(_('image'), upload_to='images', null=True, blank=True, validators=[FileExtensionValidator(allowed_extensions=["jpg", "png"])])
+                                              choices=STATUS_CHOICE, null=True, blank=True)
+    image = models.ImageField(_('image'), upload_to='images', null=True, blank=True, validators=[
+                              FileExtensionValidator(allowed_extensions=["jpg", "png"])])
 
     def __str__(self):
         return self.title
 
     def save(self, *args, **kwargs):
-        if self.image:
-            # webp = compressImageToWebp(self.image)
-            image = Image.open(self.image)
-            name = self.image.name.split(".")[0]
-            path = os.path.join(settings.MEDIA_ROOT, 'images')
-            image.save(f"{path}/{name}.webp")
         super(Product, self).save(*args, **kwargs)
+        if self.image:
+            with Image.open(self.image) as image:
+                name = self.image.name.split(".")[0]
+                path = os.path.join(settings.MEDIA_ROOT, f"{name}.webp")
+                image.save(path, format="webp")
